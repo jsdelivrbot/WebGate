@@ -1,0 +1,38 @@
+﻿<!--<jn-item-field *ngFor="let t of this.fieldsPres | async " [metadata] = "t" ></jn-item-field>-->
+<div>
+    <!--<mat-button>хуй</mat-button>-->
+    <p style="font-weight:bolder; font-size:large ">{{caption$ | async }}</p>
+    <!--<form *ngIf="form"  [formGroup] = "form" (ngSubmit)="onSubmit()" >-->
+    <form *ngIf="formGroup" [formGroup]="formGroup" (ngSubmit)="tptOnSubmit()">
+        <div class="form-group">
+            <!--<ng-container *ngFor="let ctrl of this.fieldsPres | async ">-->
+            <ng-container *ngFor="let ctrl of this.fieldsPresentors$ | async ">
+                <!--<p>{{ctrl.visible}} </p>
+                <p>{{ctrl}} </p>-->
+                <ng-container *ngIf="ctrl.visible">
+
+                    <label>{{ctrl | jnFldNameReq }}:</label>
+                    <label *ngIf="ctrl.description != ctrl.name" style="font-style:italic ; font-size:smaller; font-weight: lighter ; color:gray">{{ctrl.description}}</label>
+
+                    <!--referenced field-->
+                    <ng-container *ngIf="ctrl.foreignKey ; else defBlock">
+                        <select formControlName="{{ctrl.id}}" class=" form-control">
+                            <ng-container *ngFor="let fvalues of ( this.tptRegisterForeginControls(ctrl.foreignKey, ctrl.id ) | async )">
+                                <option value={{fvalues.id}}>{{fvalues.value}}</option>>
+                            </ng-container>
+                        </select>
+                    </ng-container>
+
+                    <ng-template #defBlock>
+                        <ng-container [ngSwitch]="ctrl.type">
+                        </ng-container>
+                        <input formControlName="{{ctrl.id}}" class="form-control" />
+                    </ng-template>
+
+                </ng-container>
+            </ng-container>
+        </div>
+
+        <button class="btn btn-success" type="submit">Сохранить</button>
+    </form>
+</div>

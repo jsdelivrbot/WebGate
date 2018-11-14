@@ -1,0 +1,13 @@
+﻿
+
+.divTableCell, .divTableHead {
+    border: 1px solid #999999;
+    display: table-cell;
+    padding: 3px 10px;
+}
+
+.divTableHead {
+    font-weight: bold; 
+    color:darkslategrey;
+    background-color:lightgray;
+}

@@ -1,0 +1,21 @@
+@using Microsoft.Extensions.Configuration
+@inject IConfiguration Configuration
+
+@{
+    ViewData["Title"] = "Home Page";
+}
+
+
+<app asp-prerender-module="ClientApp/dist/main-server"
+     asp-prerender-data='new {
+    apiSvcUrl      = Configuration["ClientAppSettings:svcFasadeUri"],
+    apiSvcMdSfx     = Configuration["ClientAppSettings:svcRestMetadataSuffix"]
+}' >Loading...</app>
+
+
+
+
+<script src="~/dist/vendor.js" asp-append-version="true"></script>
+@section scripts {
+    <script src="~/dist/main-client.js" asp-append-version="true"></script>
+}

@@ -1,0 +1,14 @@
+﻿<p>Sub URI: {{ this.svcSubUrl }}</p>
+
+<div style="display:block">
+    <div class="divTable">
+        <!--<div jn-grid-row class="divTableRow" inputIsHeader ="true" [columns] = "columns" >Loading...</div>-->
+        <!--<div jn-grid-row class="divTableRow" inputIsHeader="true" [values]="cols | async ">Loading...</div>-->
+        <!--<div jn-grid-row class="divTableRow" inputIsHeader="true" [valuesAsync]="cols">Loading...</div>-->
+
+        <div jn-grid-row class="divTableRow" inputIsHeader="true" [presentableAsync]="colsPres"> Loading...</div>
+
+        <div *ngFor="let t of this.rows | async " jn-grid-row class="divTableRow" [valuesJson]= "t" >Loading...</div>
+
+    </div>
+</div>

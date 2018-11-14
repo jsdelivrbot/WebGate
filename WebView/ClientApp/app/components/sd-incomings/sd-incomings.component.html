@@ -1,0 +1,20 @@
+﻿<h1>Serv Desc incoming </h1>
+
+<p *ngIf="!incomings"><em>Loading...</em></p>
+
+<table class='table' *ngIf="incomings">
+    <thead>
+        <tr>
+            <th>{{this.present.name}}</th>
+            <th>{{this.svcMetadataUrl}}</th>
+        </tr>
+    </thead>
+    <tbody>
+        <tr *ngFor="let incoming of incomings">
+            <td>{{ incoming.eventDateTime }}</td>
+            <td>{{ incoming.serviceDescID }}</td>
+        </tr>
+    </tbody>
+</table>
+
+<button (click)="test()">test</button>

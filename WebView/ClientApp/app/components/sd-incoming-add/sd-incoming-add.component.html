@@ -1,0 +1,25 @@
+﻿<h1>Serv Desc incoming </h1>
+
+<p *ngIf="!incomings"><em>Loading...</em></p>
+
+
+
+
+<table class='table' *ngIf="incomings">
+    <thead>
+        <tr>
+            <th>Date</th>
+            <th>Desc</th>
+            <th>Desc</th>
+        </tr>
+    </thead>
+    <tbody>
+        <tr *ngFor="let incoming of incomings">
+            <td>{{ incoming.eventDateTime }}</td>
+            <td>{{ incoming.serviceDescID }}</td>
+            <td>{{ Configuration["color"] }}</td>
+        </tr>
+    </tbody>
+</table>
+
+<button (click)="test()">test</button>

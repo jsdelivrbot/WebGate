@@ -1,0 +1,7 @@
+﻿<ng-container *ngIf="!isAsync; else syncBlock">
+    <div [ngClass]="{divTableCell:!inputIsHeader, divTableHead: inputIsHeader}"  *ngFor="let col of data"> {{col}} </div>
+</ng-container>
+
+<ng-template #syncBlock>
+    <div [ngClass]="{divTableCell:!inputIsHeader, divTableHead: inputIsHeader}"  *ngFor="let col of data | async"> {{col}} </div>
+</ng-template>
