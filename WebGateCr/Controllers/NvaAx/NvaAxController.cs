@@ -19,15 +19,16 @@ namespace WebGateCr.Controllers.NvaAx
     public class NvaAxController : Controller
     {
         const string MetaSfx = "Md";
-        enum RequestType { Data, DataFiltered, MetadataTable, MetadataField };
+        enum RequestType     { Data, DataFiltered, MetadataTable, MetadataField };
+        enum RequestEnumType { Data, Metadata, Value };
 
-        private readonly IFlightBoard context;
+        private readonly IAxCommon context;
         private readonly IHttpErrorBuilder errorBuilder;
         private readonly DataContextHelper contextHelper;
         private readonly EntytyMetadatasHelper mdHelper;
 
         // 
-        public NvaAxController(IFlightBoard dbcontext, IHttpErrorBuilder _errorBuilder, DataContextHelper _contextHelper, EntytyMetadatasHelper _mdHelper)
+        public NvaAxController(IAxCommon dbcontext, IHttpErrorBuilder _errorBuilder, DataContextHelper _contextHelper, EntytyMetadatasHelper _mdHelper)
         {
             context = dbcontext;
             errorBuilder = _errorBuilder;
@@ -35,7 +36,65 @@ namespace WebGateCr.Controllers.NvaAx
             mdHelper = _mdHelper;
         }
 
-        [HttpGet("{subPath}")]//IEnumerable<AxEnum>                                                     
+        /// <summary>
+        /// Proccessing GET request for enum  Data, Metadata, Data by record Id
+        /// </summary>
+        /// <param name="enumName"></param>
+        /// <returns></returns>
+        [HttpGet("enum/{enumName}")]//IEnumerable<AxEnum>
+        [HttpGet("enum/{enumName}/" + MetaSfx)]//IEnumerable<AxEnum>
+        [HttpGet("enum/{enumName}/{id}")]//IEnumerable<AxEnum>
+        public object Get(String enumName, long? id)
+        {
+            var errBse = @"Enumerable resource [" + enumName + "]";
+            var errMsg = errBse + " not found...";
+            bool IfLastIs(string s, string t) => (s.Substring(s.Length - t.Length) == t);
+            bool notNull(object x) => (x != null);
+
+            RequestEnumType RequestRoute(HttpRequest req, long? idv) =>
+                IfLastIs(req.Path.ToUriComponent(), "/" + MetaSfx) ?
+                    RequestEnumType.Metadata :
+                    (idv != null ? RequestEnumType.Value : RequestEnumType.Data);
+
+            // TODO context.GetEnumByName(x) не устойчив к ошибкам не обрабатывает левые енумы.....уводит в эксепшн
+
+            try
+            {
+                switch (RequestRoute(this.Request, id))
+                {
+                    case RequestEnumType.Data:
+                        return Resp<string>
+                           .Of(enumName)
+                           .MapIf(x => context.GetEnumByName(x), notNull, e => errorBuilder.ServerError(errMsg))
+                           .MapIf(x => x.Access.Reader.GetAll(), notNull, e => errorBuilder.ServerError(errBse + " not contain data..."))
+                           .Value;
+                    case RequestEnumType.Metadata:
+                        return Resp<string>
+                           .Of(enumName)
+                           .MapIf(x => context.GetEnumByName(x), notNull, e => errorBuilder.ServerError(errMsg))
+                           .MapIf(x => x.Metadatas.Metadata.GetAll(), notNull, e => errorBuilder.ServerError(errBse + " not contain data..."))
+                           .Value;
+                    case RequestEnumType.Value:
+                        return Resp<string>
+                           .Of(enumName)
+                           .MapIf(x => context.GetEnumByName(x), notNull, e => errorBuilder.ServerError(errMsg))
+                           .MapIf(x => x.Access.Reader.Find(id), notNull, e => errorBuilder.ServerError(errBse + " not found data with key:[" + id + "]..."))
+                           .Value;
+                    default:
+                        return errorBuilder.ServerError(errMsg);
+                }
+            }
+            catch (Exception e)
+            {
+                return errorBuilder.ServerError(e.Message);
+            }
+        }
+
+
+        /// <summary>
+        /// Proccessing GET request Data, Metadata, Metadata by field  
+        /// </summary>
+        [HttpGet("{subPath}")]//IEnumerable<AxEnum>                          
         [HttpGet("{subPath}/" + MetaSfx)]//IEnumerable<AxEnum>
         [HttpGet("{subPath}/" + MetaSfx + "/{fieldId}")]//IEnumerable<AxEnum>
         public object Get(String subPath, String fieldId, [FromQuery]IntervalParameters parameters)
@@ -51,7 +110,9 @@ namespace WebGateCr.Controllers.NvaAx
                         (fld != null ?
                             RequestType.MetadataField :
                             (req.Query.Count > 0 ? RequestType.DataFiltered : RequestType.Data)
-                        );
+                            );
+
+
             try
             {
                 switch (RequestRoute(this.Request, fieldId))
@@ -90,15 +151,39 @@ namespace WebGateCr.Controllers.NvaAx
                     default:
                         return errorBuilder.ServerError(errMsg);
                 }
-
             }
             catch (Exception e)
             {
                 return errorBuilder.ServerError(e.Message);
             }
-
         }
 
+        /// <summary>
+        /// Proccessing GET request Data by record Id
+        /// </summary>
+        // GET api/values/5
+        [HttpGet("{subPath}/{id}")]
+        public object Get(String subPath, long id)
+        {
+            var errMsg  = @"Resource [" + subPath + "] not found...";
+            var errMsg2 = "Key [" + id + "] of [" + subPath + "] not found";
+            bool notNull(object x) => (x != null);
+
+            try
+            {
+                return Resp<string>
+                    .Of(subPath)
+                    .If(x => contextHelper.ExistIDal(context, x), e => errorBuilder.ServerError(errMsg))
+                    .MapIf(x => contextHelper.InvokeReaderMethod(context, x, "Find", new object[] { id }), notNull, e => errorBuilder.ServerError(errMsg2))
+                    .Value;
+            }
+            catch (Exception e)
+            {
+                return errorBuilder.ServerError(e.Message);
+            }
+        }
+
+        
         // моноид для построения ответа сервиса 
         class Resp<T>
         {

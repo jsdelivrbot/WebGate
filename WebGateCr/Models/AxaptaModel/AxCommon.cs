@@ -14,23 +14,31 @@ namespace WebGateCr.Models
     ///
     /// Модель общих данных аксапты
      
-    public interface IAxCommon
+    public interface IAxCommon : IFlightBoard
     {
         IDal<AxEnum> NVAOMAAirLinesType { get; }
         IDal<AxEnum> GetEnumByName(string enumName);
-
         IDal<NVASDEVENTTYPE> NvaSdEventType { get; }
 
         IDal<NVAATS_PHONES>   NvaAtsPhones    { get;}
         IDal<NVAATS_DEVICE>   NvaAtsDevice    { get;}
         IDal<NVAATS_BUILDING> NvaAtsBuilding  { get; }
         IDal<NVAATS_SETTING>  NvaAtsSetting   { get; }
+
+        // OMA 
+        IDal<NVAOMACUSTLOGO> NvaOmaCustLogo { get; }
+
     }
 
     public class AxCommon :IAxCommon
     {
         private AxaptaContext context;
+        IFlightBoard flightBoardContext;
+
         private IDalBuilderFactory dalBuilderFactory;
+
+        //IFlightBoard
+        public IDal<FlightFids> FlightFids { get { return flightBoardContext.FlightFids;  } }
 
         // Явная частная реализация енума
         public IDal<AxEnum> NVAOMAAirLinesType { get; }
@@ -39,15 +47,20 @@ namespace WebGateCr.Models
         public IDal<NVASDEVENTTYPE> NvaSdEventType { get; }
 
         // АТС 
-        public IDal<NVAATS_PHONES> NvaAtsPhones { get; }
-        public IDal<NVAATS_DEVICE> NvaAtsDevice { get; }
+        public IDal<NVAATS_PHONES>   NvaAtsPhones { get; }
+        public IDal<NVAATS_DEVICE>   NvaAtsDevice { get; }
         public IDal<NVAATS_BUILDING> NvaAtsBuilding { get; }
         public IDal<NVAATS_SETTING>  NvaAtsSetting { get; }
 
+        //OMA
+        public IDal<NVAOMACUSTLOGO> NvaOmaCustLogo { get; }
 
-        public AxCommon(AxaptaContext _context, IDalBuilderFactory _dalBuilderFactory)
+
+
+    public AxCommon(AxaptaContext _context, IFlightBoard _FlightBoardContext, IDalBuilderFactory _dalBuilderFactory)
         {
             context = _context;
+            flightBoardContext = _FlightBoardContext;
             dalBuilderFactory = _dalBuilderFactory;
 
             var dalBuilder = dalBuilderFactory.Create<AxEnum, AxaptaContext>();
@@ -73,15 +86,25 @@ namespace WebGateCr.Models
                 .Build();
 
             // NVASDEVENTTYPE
-            this.NvaSdEventType = dalBuilderFactory.Create<NVASDEVENTTYPE, AxaptaContext>()
+            //this.NvaSdEventType = dalBuilderFactory.Create<NVASDEVENTTYPE, AxaptaContext>()
+            //    .SetSource(context)                                        // контекст
+            //    .SetReadAccess(
+            //        (s => s.NvaSdEventType.Select(x => x)),
+            //        ((s, id) => s.NvaSdEventType.Find(new object[] { id })),
+            //        EntityParHelper.ToBaseType<NVASDEVENTTYPE>(EntityParHelper.GetSelectFunction<NVASDEVENTTYPE>())
+            //    )
+            //    .Build();
+
+            //
+            // NVAOMACUSTLOGO
+            this.NvaOmaCustLogo = dalBuilderFactory.Create<NVAOMACUSTLOGO, AxaptaContext>()
                 .SetSource(context)                                        // контекст
                 .SetReadAccess(
-                    (s => s.NvaSdEventType.Select(x => x)),
-                    ((s, id) => s.NvaSdEventType.Find(new object[] { id })),
-                    EntityParHelper.ToBaseType<NVASDEVENTTYPE>(EntityParHelper.GetSelectFunction<NVASDEVENTTYPE>())
+                    (s => s.NVAOMACUSTLOGO.Select(x => x)),
+                    ((s, id) => s.NVAOMACUSTLOGO.Find(new object[] { id })),
+                    EntityParHelper.ToBaseType<NVAOMACUSTLOGO>(EntityParHelper.GetSelectFunction<NVAOMACUSTLOGO>())
                 )
                 .Build();
-
 
             #region ATS acessors
             this.NvaAtsPhones = dalBuilderFactory.Create<NVAATS_PHONES, AxaptaContext>()
@@ -130,6 +153,8 @@ namespace WebGateCr.Models
 
         private Func<AxaptaContext, object, AxEnum> FuncFind =>
            (src, key) => src.NVAOMAAirLinesType.Find(x => (x.ID == Int64.Parse(key.ToString())));
+
+        
 
         #region Ax Enum common acess implimentation
         private Func<AxaptaContext, object, AxEnum> GetFuncFindName(string enumName)
